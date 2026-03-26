@@ -2,37 +2,35 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🎴 Memoria SST Pro</title>
-
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5WC0FBFZZ"></script>
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-Y5WC0FBFZZ');
-</script>
 
 <style>
 body{
   font-family: Arial;
   background:#f5f5f5;
   text-align:center;
+  margin:0;
+  padding:10px;
 }
 
 h1{ color:#2979ff; }
 
+/* 🔥 TABLERO RESPONSIVE */
 .grid{
   display:grid;
-  grid-template-columns:repeat(4,100px);
+  grid-template-columns:repeat(4, 1fr);
   gap:10px;
   justify-content:center;
   margin-top:20px;
+  max-width:500px;
+  margin-left:auto;
+  margin-right:auto;
 }
 
 .card{
-  width:100px;
-  height:100px;
+  width:100%;
+  aspect-ratio:1/1; /* 🔥 hace las cartas cuadradas */
   perspective:1000px;
   cursor:pointer;
 }
@@ -57,7 +55,7 @@ h1{ color:#2979ff; }
   display:flex;
   justify-content:center;
   align-items:center;
-  font-size:40px;
+  font-size:6vw; /* 🔥 escala en móvil */
   backface-visibility:hidden;
 }
 
@@ -83,7 +81,13 @@ h1{ color:#2979ff; }
 
 button{
   margin:5px;
-  padding:10px;
+  padding:10px 15px;
+  font-size:16px;
+  border:none;
+  border-radius:8px;
+  background:#2979ff;
+  color:white;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -94,6 +98,9 @@ button{
 <p>Encuentra las parejas y responde preguntas para ganar puntos</p>
 
 <div id="score">Puntos: 0</div>
+
+<!-- 🔥 BOTÓN NUEVO -->
+<button onclick="restartGame()">🔄 Reiniciar</button>
 
 <div class="grid" id="grid"></div>
 
@@ -202,6 +209,15 @@ function reset(){
 
 function updateScore(){
   document.getElementById("score").innerText="Puntos: "+score;
+}
+
+// 🔥 NUEVA FUNCIÓN REINICIAR
+function restartGame(){
+  score = 0;
+  matches = 0;
+  updateScore();
+  document.getElementById("questionBox").style.display="none";
+  createBoard();
 }
 
 // Pregunta SST
