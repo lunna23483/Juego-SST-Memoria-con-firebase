@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>🎴 Memoria SST Pro</title>
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5WC0FBFZZ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-Y5WC0FBFZZ');
+</script>
+
+<style>
+body{
+  font-family: Arial;
+  background:#f5f5f5;
+  text-align:center;
+}
+
+h1{ color:#2979ff; }
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,100px);
+  gap:10px;
+  justify-content:center;
+  margin-top:20px;
+}
+
+.card{
+  width:100px;
+  height:100px;
+  perspective:1000px;
+  cursor:pointer;
+}
+
+.inner{
+  width:100%;
+  height:100%;
+  position:relative;
+  transform-style:preserve-3d;
+  transition:transform 0.6s;
+}
+
+.card.flip .inner{
+  transform:rotateY(180deg);
+}
+
+.front, .back{
+  position:absolute;
+  width:100%;
+  height:100%;
+  border-radius:10px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:40px;
+  backface-visibility:hidden;
+}
+
+.front{
+  background:#2979ff;
+  color:white;
+}
+
+.back{
+  background:#fff;
+  transform:rotateY(180deg);
+}
+
+#score{
+  margin-top:20px;
+  font-size:20px;
+}
+
+#questionBox{
+  margin-top:20px;
+  display:none;
+}
+
+button{
+  margin:5px;
+  padding:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🎴 Memoria SST</h1>
+<p>Encuentra las parejas y responde preguntas para ganar puntos</p>
+
+<div id="score">Puntos: 0</div>
+
+<div class="grid" id="grid"></div>
+
+<div id="questionBox">
+  <h3 id="question"></h3>
+  <div id="answers"></div>
+</div>
+
+<script>
+let icons = ["🪖","🪖","🧯","🧯","⚡","⚡","🧤","🧤","👓","👓","🚧","🚧","🔥","🔥","🚑","🚑"];
+let grid = document.getElementById("grid");
+let first = null;
+let second = null;
+let lock = false;
+let score = 0;
+let matches = 0;
+
+// Preguntas SST (AMPLIADAS)
+const questions = [
+ {q:"¿Qué EPP protege la cabeza?", o:["Casco","Guantes","Botas"], r:0},
+ {q:"¿Para qué sirve un extintor?", o:["Apagar fuego","Cocinar","Iluminar"], r:0},
+ {q:"¿Riesgo de cables sueltos?", o:["Eléctrico","Químico","Biológico"], r:0},
+ {q:"¿Qué protege las manos?", o:["Guantes","Casco","Gafas"], r:0},
+ {q:"¿Qué protege los ojos?", o:["Gafas","Botas","Chaleco"], r:0},
+
+ {q:"¿Qué EPP protege los pies?", o:["Botas de seguridad","Casco","Guantes"], r:0},
+ {q:"¿Qué color identifica riesgo de incendio?", o:["Rojo","Azul","Verde"], r:0},
+ {q:"¿Qué hacer ante un accidente?", o:["Reportar","Ignorar","Esconder"], r:0},
+ {q:"¿Riesgo por químicos?", o:["Químico","Físico","Eléctrico"], r:0},
+ {q:"¿Qué protege la audición?", o:["Protectores auditivos","Casco","Gafas"], r:0},
+
+ {q:"¿Qué significa SST?", o:["Seguridad y Salud en el Trabajo","Sistema Técnico Total","Salud Social Técnica"], r:0},
+ {q:"¿Qué hacer en un incendio?", o:["Evacuar","Dormir","Correr sin control"], r:0},
+ {q:"¿Riesgo por altura?", o:["Caída","Ruido","Radiación"], r:0},
+ {q:"¿Qué EPP para soldadura?", o:["Careta","Guantes de lana","Sombrero"], r:0},
+ {q:"¿Qué evita resbalones?", o:["Orden y limpieza","Oscuridad","Ruido"], r:0},
+
+ {q:"¿Qué tipo de riesgo es el ruido?", o:["Físico","Químico","Biológico"], r:0},
+ {q:"¿Qué hacer con cables dañados?", o:["Reportar","Usarlos","Ignorar"], r:0},
+ {q:"¿Qué protege contra caídas?", o:["Arnés","Guantes","Botas"], r:0},
+ {q:"¿Qué hacer en evacuación?", o:["Seguir rutas","Gritar","Correr sin rumbo"], r:0},
+ {q:"¿Qué riesgo es un virus?", o:["Biológico","Físico","Mecánico"], r:0},
+
+ {q:"¿Qué color es salida de emergencia?", o:["Verde","Rojo","Negro"], r:0},
+ {q:"¿Qué hacer con derrames químicos?", o:["Reportar y aislar","Limpiar sin protección","Ignorar"], r:0},
+ {q:"¿Qué protege contra polvo?", o:["Mascarilla","Casco","Botas"], r:0},
+ {q:"¿Qué riesgo es maquinaria?", o:["Mecánico","Químico","Biológico"], r:0},
+ {q:"¿Qué hacer antes de trabajar?", o:["Revisar EPP","Ignorar normas","Correr"], r:0}
+];
+
+function shuffle(array){
+  return array.sort(()=>Math.random()-0.5);
+}
+
+function createBoard(){
+  grid.innerHTML="";
+  shuffle(icons).forEach(icon=>{
+    const card = document.createElement("div");
+    card.classList.add("card");
+
+    card.innerHTML=`
+      <div class="inner">
+        <div class="front">❓</div>
+        <div class="back">${icon}</div>
+      </div>
+    `;
+
+    card.onclick=()=>flip(card,icon);
+    grid.appendChild(card);
+  });
+}
+
+function flip(card,icon){
+  if(lock || card.classList.contains("flip")) return;
+
+  card.classList.add("flip");
+
+  if(!first){
+    first={card,icon};
+    return;
+  }
+
+  second={card,icon};
+  lock=true;
+
+  if(first.icon === second.icon){
+    score += 20;
+    matches++;
+    updateScore();
+    setTimeout(showQuestion,500);
+    reset();
+  }else{
+    setTimeout(()=>{
+      first.card.classList.remove("flip");
+      second.card.classList.remove("flip");
+      reset();
+    },800);
+  }
+}
+
+function reset(){
+  first=null;
+  second=null;
+  lock=false;
+}
+
+function updateScore(){
+  document.getElementById("score").innerText="Puntos: "+score;
+}
+
+// Pregunta SST
+function showQuestion(){
+  const q = questions[Math.floor(Math.random()*questions.length)];
+
+  const box = document.getElementById("questionBox");
+  const text = document.getElementById("question");
+  const answers = document.getElementById("answers");
+
+  text.innerText = q.q;
+  answers.innerHTML="";
+  box.style.display="block";
+
+  q.o.forEach((op,i)=>{
+    const btn=document.createElement("button");
+    btn.innerText=op;
+    btn.onclick=()=>{
+      if(i===q.r){
+        score+=10;
+      }
+      updateScore();
+      box.style.display="none";
+      checkEnd();
+    }
+    answers.appendChild(btn);
+  });
+}
+
+// Final del juego
+function checkEnd(){
+  if(matches === icons.length/2){
+    setTimeout(()=>{
+      alert("🏆 ¡Ganaste! Puntos: "+score);
+    },300);
+  }
+}
+
+createBoard();
+</script>
+
+</body>
+</html>
