@@ -16,7 +16,6 @@ body{
 
 h1{ color:#2979ff; }
 
-/* 🔥 TABLERO RESPONSIVE */
 .grid{
   display:grid;
   grid-template-columns:repeat(4, 1fr);
@@ -30,7 +29,7 @@ h1{ color:#2979ff; }
 
 .card{
   width:100%;
-  aspect-ratio:1/1; /* 🔥 hace las cartas cuadradas */
+  aspect-ratio:1/1;
   perspective:1000px;
   cursor:pointer;
 }
@@ -55,7 +54,7 @@ h1{ color:#2979ff; }
   display:flex;
   justify-content:center;
   align-items:center;
-  font-size:6vw; /* 🔥 escala en móvil */
+  font-size:6vw;
   backface-visibility:hidden;
 }
 
@@ -99,7 +98,6 @@ button{
 
 <div id="score">Puntos: 0</div>
 
-<!-- 🔥 BOTÓN NUEVO -->
 <button onclick="restartGame()">🔄 Reiniciar</button>
 
 <div class="grid" id="grid"></div>
@@ -117,41 +115,27 @@ let second = null;
 let lock = false;
 let score = 0;
 let matches = 0;
+let answered = false; // 🔥 evita múltiples respuestas
 
-// Preguntas SST (AMPLIADAS)
 const questions = [
  {q:"¿Qué EPP protege la cabeza?", o:["Casco","Guantes","Botas"], r:0},
  {q:"¿Para qué sirve un extintor?", o:["Apagar fuego","Cocinar","Iluminar"], r:0},
  {q:"¿Riesgo de cables sueltos?", o:["Eléctrico","Químico","Biológico"], r:0},
  {q:"¿Qué protege las manos?", o:["Guantes","Casco","Gafas"], r:0},
  {q:"¿Qué protege los ojos?", o:["Gafas","Botas","Chaleco"], r:0},
-
  {q:"¿Qué EPP protege los pies?", o:["Botas de seguridad","Casco","Guantes"], r:0},
  {q:"¿Qué color identifica riesgo de incendio?", o:["Rojo","Azul","Verde"], r:0},
  {q:"¿Qué hacer ante un accidente?", o:["Reportar","Ignorar","Esconder"], r:0},
  {q:"¿Riesgo por químicos?", o:["Químico","Físico","Eléctrico"], r:0},
  {q:"¿Qué protege la audición?", o:["Protectores auditivos","Casco","Gafas"], r:0},
-
  {q:"¿Qué significa SST?", o:["Seguridad y Salud en el Trabajo","Sistema Técnico Total","Salud Social Técnica"], r:0},
  {q:"¿Qué hacer en un incendio?", o:["Evacuar","Dormir","Correr sin control"], r:0},
  {q:"¿Riesgo por altura?", o:["Caída","Ruido","Radiación"], r:0},
  {q:"¿Qué EPP para soldadura?", o:["Careta","Guantes de lana","Sombrero"], r:0},
- {q:"¿Qué evita resbalones?", o:["Orden y limpieza","Oscuridad","Ruido"], r:0},
-
- {q:"¿Qué tipo de riesgo es el ruido?", o:["Físico","Químico","Biológico"], r:0},
- {q:"¿Qué hacer con cables dañados?", o:["Reportar","Usarlos","Ignorar"], r:0},
- {q:"¿Qué protege contra caídas?", o:["Arnés","Guantes","Botas"], r:0},
- {q:"¿Qué hacer en evacuación?", o:["Seguir rutas","Gritar","Correr sin rumbo"], r:0},
- {q:"¿Qué riesgo es un virus?", o:["Biológico","Físico","Mecánico"], r:0},
-
- {q:"¿Qué color es salida de emergencia?", o:["Verde","Rojo","Negro"], r:0},
- {q:"¿Qué hacer con derrames químicos?", o:["Reportar y aislar","Limpiar sin protección","Ignorar"], r:0},
- {q:"¿Qué protege contra polvo?", o:["Mascarilla","Casco","Botas"], r:0},
- {q:"¿Qué riesgo es maquinaria?", o:["Mecánico","Químico","Biológico"], r:0},
- {q:"¿Qué hacer antes de trabajar?", o:["Revisar EPP","Ignorar normas","Correr"], r:0}
+ {q:"¿Qué evita resbalones?", o:["Orden y limpieza","Oscuridad","Ruido"], r:0}
 ];
 
-// 🔥 CONTROL DE PREGUNTAS (NUEVO)
+// 🔥 CONTROL REAL DE NO REPETICIÓN
 let questionsPool = [];
 
 function resetQuestions(){
@@ -161,7 +145,7 @@ function resetQuestions(){
 
 function getQuestion(){
   if(questionsPool.length === 0){
-    resetQuestions(); // vuelve a cargar si se acaban
+    resetQuestions();
   }
   return questionsPool.pop();
 }
@@ -226,7 +210,6 @@ function updateScore(){
   document.getElementById("score").innerText="Puntos: "+score;
 }
 
-// 🔥 REINICIAR TAMBIÉN RESETEA PREGUNTAS
 function restartGame(){
   score = 0;
   matches = 0;
@@ -236,9 +219,10 @@ function restartGame(){
   createBoard();
 }
 
-// Pregunta SST
+// 🔥 PREGUNTAS CORREGIDAS
 function showQuestion(){
-  const q = getQuestion(); // 🔥 CAMBIO CLAVE
+  const q = getQuestion();
+  answered = false;
 
   const box = document.getElementById("questionBox");
   const text = document.getElementById("question");
@@ -251,19 +235,27 @@ function showQuestion(){
   q.o.forEach((op,i)=>{
     const btn=document.createElement("button");
     btn.innerText=op;
+
     btn.onclick=()=>{
+      if(answered) return; // 🔥 evita doble respuesta
+      answered = true;
+
       if(i===q.r){
         score+=10;
       }
+
       updateScore();
-      box.style.display="none";
-      checkEnd();
+
+      setTimeout(()=>{
+        box.style.display="none";
+        checkEnd();
+      },300);
     }
+
     answers.appendChild(btn);
   });
 }
 
-// Final del juego
 function checkEnd(){
   if(matches === icons.length/2){
     setTimeout(()=>{
@@ -272,7 +264,9 @@ function checkEnd(){
   }
 }
 
-// 🔥 INICIALIZA PREGUNTAS
 resetQuestions();
 createBoard();
 </script>
+
+</body>
+</html>
