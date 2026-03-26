@@ -151,6 +151,21 @@ const questions = [
  {q:"¿Qué hacer antes de trabajar?", o:["Revisar EPP","Ignorar normas","Correr"], r:0}
 ];
 
+// 🔥 CONTROL DE PREGUNTAS (NUEVO)
+let questionsPool = [];
+
+function resetQuestions(){
+  questionsPool = [...questions];
+  shuffle(questionsPool);
+}
+
+function getQuestion(){
+  if(questionsPool.length === 0){
+    resetQuestions(); // vuelve a cargar si se acaban
+  }
+  return questionsPool.pop();
+}
+
 function shuffle(array){
   return array.sort(()=>Math.random()-0.5);
 }
@@ -211,18 +226,19 @@ function updateScore(){
   document.getElementById("score").innerText="Puntos: "+score;
 }
 
-// 🔥 NUEVA FUNCIÓN REINICIAR
+// 🔥 REINICIAR TAMBIÉN RESETEA PREGUNTAS
 function restartGame(){
   score = 0;
   matches = 0;
   updateScore();
   document.getElementById("questionBox").style.display="none";
+  resetQuestions();
   createBoard();
 }
 
 // Pregunta SST
 function showQuestion(){
-  const q = questions[Math.floor(Math.random()*questions.length)];
+  const q = getQuestion(); // 🔥 CAMBIO CLAVE
 
   const box = document.getElementById("questionBox");
   const text = document.getElementById("question");
@@ -256,8 +272,7 @@ function checkEnd(){
   }
 }
 
+// 🔥 INICIALIZA PREGUNTAS
+resetQuestions();
 createBoard();
 </script>
-
-</body>
-</html>
